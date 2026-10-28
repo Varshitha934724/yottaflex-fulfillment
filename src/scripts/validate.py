@@ -273,6 +273,57 @@ def main():
 
     check("Tracking lifecycle order", errors)
 
+    # Order-level delivery status roll-up from shipment tracking.
+    errors = []
+    delivery_by_shipment = defaultdict(list)
+
+    for event in tracking:
+        delivery_by_shipment[event["shipment_id"]].append(event)
+
+    shipments_by_order = defaultdict(list)
+
+    for shipment in shipments:
+        shipments_by_order[shipment["order_id"]].append(
+            shipment["shipment_id"]
+        )
+
+    order_delivery_status = {}
+
+    for order_id, order_shipments in shipments_by_order.items():
+        delivered_count = 0
+        dispatched_count = 0
+
+        for shipment_id in order_shipments:
+            events = delivery_by_shipment.get(shipment_id, [])
+            event_types = {event["event_type"] for event in events}
+
+            if "DISPATCHED" in event_types:
+                dispatched_count += 1
+
+            if "DELIVERED" in event_types:
+                delivered_count += 1
+
+        if delivered_count == len(order_shipments):
+            status = "DELIVERED"
+        elif delivered_count > 0:
+            status = "PARTIALLY_DELIVERED"
+        elif dispatched_count > 0:
+            status = "IN_TRANSIT"
+        else:
+            status = "NOT_DISPATCHED"
+
+        order_delivery_status[order_id] = status
+
+    print("Order delivery status roll-up:")
+    for status, count in sorted(
+        __import__("collections").Counter(
+            order_delivery_status.values()
+        ).items()
+    ):
+        print(f"  {status}: {count}")
+
+    check("Order delivery status roll-up", errors)
+
     # Basic foreign-key checks.
     errors = []
 
