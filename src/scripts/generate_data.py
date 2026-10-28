@@ -296,26 +296,61 @@ event_types = [
     "IN_TRANSIT",
     "OUT_FOR_DELIVERY",
     "DELIVERED",
-    "DELAYED",
 ]
 
 if not shipments:
     raise RuntimeError("No shipments generated.")
 
-for event_no in range(1, TRACKING_EVENT_COUNT + 1):
-    shipment = shipments[(event_no - 1) % len(shipments)]
-    event_type = event_types[(event_no - 1) % len(event_types)]
+tracking = []
 
+# Assign at least one event to each shipment.
+# Distribute remaining events as second events.
+base_events = len(shipments)
+if TRACKING_EVENT_COUNT < base_events:
+    raise RuntimeError(
+        "Tracking event count must be at least the shipment count."
+    )
+
+extra_events = TRACKING_EVENT_COUNT - base_events
+
+for index, shipment in enumerate(shipments):
     dispatch_time = datetime.fromisoformat(shipment["dispatch_time"])
-    event_time = dispatch_time + timedelta(hours=(event_no % 120))
+
+    # Start each shipment at a deterministic lifecycle stage.
+    stage = index % (len(event_types) - 1)
+    first_type = event_types[stage]
+
+    offsets = [-3, -2, -1, 0, 24, 48, 72]
 
     tracking.append({
-        "tracking_event_id": f"TRK-{event_no:06d}",
+        "tracking_event_id": f"TRK-{len(tracking) + 1:06d}",
         "shipment_id": shipment["shipment_id"],
-        "event_type": event_type,
-        "event_time": event_time.isoformat(),
-        "is_anomaly": "TRUE" if random.random() < 0.02 else "FALSE",
+        "event_type": first_type,
+        "event_time": (
+            dispatch_time + timedelta(hours=offsets[stage])
+        ).isoformat(),
+        "is_anomaly": "FALSE",
     })
+
+    # Add a later lifecycle event to the first extra_events shipments.
+    if index < extra_events:
+        next_stage = stage + 1
+        next_type = event_types[next_stage]
+
+        tracking.append({
+            "tracking_event_id": f"TRK-{len(tracking) + 1:06d}",
+            "shipment_id": shipment["shipment_id"],
+            "event_type": next_type,
+            "event_time": (
+                dispatch_time + timedelta(hours=offsets[next_stage])
+            ).isoformat(),
+            "is_anomaly": "FALSE",
+        })
+
+if len(tracking) != TRACKING_EVENT_COUNT:
+    raise RuntimeError(
+        f"Expected {TRACKING_EVENT_COUNT} events, got {len(tracking)}"
+    )
 
 write_csv("orders.csv", orders)
 write_csv("order_lines.csv", lines)
