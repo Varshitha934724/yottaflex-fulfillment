@@ -2,20 +2,19 @@ YottaFlex Fulfillment Planning System
 
 Overview
 
-This project implements a fulfillment planning system that allocates order lines to fulfillment nodes based on inventory availability, node capacity, and carrier selection rules.
+A fulfillment planning system that allocates order lines to fulfillment nodes based on inventory availability, warehouse capacity, and carrier rules.
 
-The project includes a synthetic dataset generator, a Python allocation engine, ground-truth validation, automated tests, and a React dashboard.
+The project includes synthetic data generation, a Python allocation engine, validation checks, automated tests, and a React dashboard.
 
 Key Features
 
-- Generates reproducible synthetic data using seed "20261022".
-- Processes 50,000 orders and their order lines.
+- Generates reproducible data using seed "20261022".
+- Processes 50,000 orders and 57,483 order lines.
 - Models 20 fulfillment nodes and 10 carriers.
 - Generates 100,000 tracking events.
-- Produces allocation results for each order line.
-- Identifies allocated and unfulfillable order lines.
-- Validates allocation results against the supplied ground truth.
-- Provides a dashboard for viewing orders, fulfillment nodes, and allocation decisions.
+- Allocates order lines and identifies unfulfillable lines.
+- Compares allocation results with ground truth.
+- Provides a dashboard for orders, fulfillment nodes, and allocation decisions.
 
 Technology Stack
 
@@ -24,7 +23,7 @@ Technology Stack
 - React
 - Vite
 - JavaScript
-- CSV datasets
+- CSV
 
 Project Structure
 
@@ -36,89 +35,80 @@ yottaflex-fulfillment/
 │   ├── fulfillment/
 │   │   └── allocator.py
 │   ├── scripts/
-│   │   └── generate_data.py
+│   │   ├── generate_data.py
+│   │   └── validate.py
 │   ├── tests/
 │   │   └── test_allocator.py
 │   ├── App.jsx
 │   ├── App.css
 │   ├── index.css
 │   └── main.jsx
+├── DATA_DICTIONARY.md
+├── PROMPT_HISTORY.md
 ├── package.json
 └── README.md
 
 Prerequisites
 
-Install Python and Node.js. npm is required to run the React dashboard.
+Install Python, Node.js, and npm.
 
 Install pytest:
 
 python -m pip install pytest
 
-Generate the Dataset
+Setup and Run
 
-From the project root, run:
+1. Generate the dataset
 
 python src/scripts/generate_data.py
 
-The generator uses a fixed random seed to make data generation reproducible.
-
-Run the Allocation Engine
+2. Run the allocation engine
 
 python src/fulfillment/allocator.py
 
-This generates the allocation results used by the dashboard and validation workflow.
+3. Validate the results
 
-Validate Allocation Results
+python src/scripts/validate.py
 
-Compare the generated allocation results against the ground-truth dataset. The current validation results are:
+4. Run automated tests
 
-- Orders processed: 50,000
-- Allocation result rows: 57,483
-- Allocated lines: 57,065
-- Unfulfillable lines: 418
-- Status mismatches: 0
-- Node mismatches: 0
-- Carrier mismatches: 0
+python -m pytest -v -p no:cacheprovider
 
-These counts describe the currently generated dataset and should be verified again after regenerating or changing the allocation logic.
-
-Run Automated Tests
-
-python -m pytest -v
-
-The current automated test suite checks that the allocation results file exists, that allocation statuses are valid, and that every result has an order-line ID.
-
-Run the Dashboard
-
-Install dependencies:
+5. Start the dashboard
 
 npm install
-
-Start the development server:
-
 npm run dev
 
-Open the local URL printed in the terminal, usually "http://localhost:5173".
+Open the local URL displayed in the terminal, usually "http://localhost:5173".
 
-The dashboard provides:
+Current Allocation Results
+
+Metric| Result
+Orders processed| 50,000
+Order lines| 57,483
+Allocated lines| 57,065
+Unfulfillable lines| 418
+Automated tests| 3 passed
+
+These results describe the current generated dataset and should be rechecked after changing the data or allocation logic.
+
+Dashboard
+
+The dashboard includes:
 
 - Orders: Search and inspect order allocation details.
 - Fulfillment Nodes: View fulfillment node information.
 - Decisions: Review allocation decisions and exceptions.
 
-The dashboard reads the CSV files from "public/data/". After regenerating the data or rerunning the allocator, copy the updated dashboard CSV files into that directory.
+The dashboard reads CSV files from "public/data/". After regenerating data or allocation results, copy the required updated CSV files into that directory.
 
 Reproducibility
 
-The dataset generator uses seed "20261022". For repeatable validation, generate the dataset first, run the allocation engine, and compare its output against the ground truth. Then run the automated tests.
-
-Current Test Status
-
-The current automated test run completed with 3 passed. A pytest cache permission warning was also reported; it did not prevent the tests from passing.
+The data generator uses the fixed seed "20261022". Generate the data, run the allocator, and execute the validation script and tests to reproduce the workflow.
 
 Future Improvements
 
-- Add tests for inventory limits, node capacity, and carrier selection.
-- Validate split shipments and delivery-promise constraints.
-- Add dashboard filters for allocation status and fulfillment node.
-- Improve error handling and reporting for invalid or missing data.
+- Add broader tests for inventory and capacity constraints.
+- Strengthen delivery-status roll-up and split-shipment validation.
+- Improve carrier service-level and delivery-promise checks.
+- Add dashboard filters and enhanced error reporting.
