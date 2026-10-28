@@ -1,0 +1,11 @@
+carrier_id,carrier_name,cutoff_hour,base_transit_days,service_zones
+CAR-001,Carrier 1,14,3,"South,West,North,East"
+CAR-002,Carrier 2,14,3,"South,West"
+CAR-003,Carrier 3,16,2,"South,West"
+CAR-004,Carrier 4,18,1,"South,West"
+CAR-005,Carrier 5,16,2,"South,West"
+CAR-006,Carrier 6,14,4,"South,West"
+CAR-007,Carrier 7,18,3,"North,East"
+CAR-008,Carrier 8,14,2,"North,East"
+CAR-009,Carrier 9,16,4,"South,West,North,East"
+CAR-010,Carrier 10,14,3,"West,North"
