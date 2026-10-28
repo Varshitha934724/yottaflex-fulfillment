@@ -376,6 +376,48 @@ def main():
 
     check("Basic foreign-key integrity", errors)
 
+    # 10. Compare allocation results with ground truth.
+    errors = []
+    ground_truth = read_csv("ground_truth.csv")
+
+    allocation_by_line = {
+        row["order_line_id"]: row
+        for row in allocations
+    }
+
+    for expected in ground_truth:
+        line_id = expected["order_line_id"]
+        actual = allocation_by_line.get(line_id)
+
+        if actual is None:
+            errors.append(f"{line_id}: missing allocation result")
+            continue
+
+        if actual["status"] != expected["allocation_status"]:
+            errors.append(
+                f"{line_id}: status {actual['status']}, "
+                f"expected {expected['allocation_status']}"
+            )
+
+        expected_node = expected.get("selected_node_id", "")
+        actual_node = actual.get("node_id", "")
+
+        if expected_node and actual_node != expected_node:
+            errors.append(
+                f"{line_id}: node {actual_node}, expected {expected_node}"
+            )
+
+        expected_carrier = expected.get("selected_carrier_id", "")
+        actual_carrier = actual.get("carrier_id", "")
+
+        if expected_carrier and actual_carrier != expected_carrier:
+            errors.append(
+                f"{line_id}: carrier {actual_carrier}, "
+                f"expected {expected_carrier}"
+            )
+
+    check("Allocation results vs ground truth", errors)
+
 
 if __name__ == "__main__":
     main()
